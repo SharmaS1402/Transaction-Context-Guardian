@@ -1,111 +1,138 @@
-![TypeScript](https://img.shields.io/badge/typescript-%23007ACC.svg?style=for-the-badge&logo=typescript&logoColor=white)
-![NodeJS](https://img.shields.io/badge/node.js-6DA55F?style=for-the-badge&logo=node.js&logoColor=white)
-![Express.js](https://img.shields.io/badge/express.js-%23404d59.svg?style=for-the-badge&logo=express&logoColor=%2361DAFB)
-![Jest](https://img.shields.io/badge/-jest-%23C21325?style=for-the-badge&logo=jest&logoColor=white)
-![Docker](https://img.shields.io/badge/docker-%230db7ed.svg?style=for-the-badge&logo=docker&logoColor=white)
-![ESLint](https://img.shields.io/badge/ESLint-4B3263?style=for-the-badge&logo=eslint&logoColor=white)
-![Yarn](https://img.shields.io/badge/yarn-%232C8EBB.svg?style=for-the-badge&logo=yarn&logoColor=white)
+# Transaction Context Guardian
 
-# Venn Custom Detector boilerplate
-A boilerplate for getting started with Venn as a Security Provider. Use is as a starting point to build your own custom detectors on Venn Network.
+A comprehensive blockchain transaction security system that protects users from various threats through multi-layer analysis.
 
-> 📚 [What is Venn?](https://docs.venn.build/)
+## Overview
 
-## Table of Contents
-- [Introduction](#venn-custom-detector-boilerplate)
-- [Quick Start](#quick-start)
-- [What's inside?](#-whats-inside)
-- [Local development:](#️-local-development)
-- [Deploy to production](#-deploy-to-production)
+Transaction Context Guardian is a sophisticated security system that analyzes blockchain transactions through multiple risk dimensions to detect and prevent various threats. By employing a layered approach, it can identify patterns that single-vector analysis might miss.
 
-## ✨ Quick start
-1. Clone or fork this repo and install dependencies using `yarn install` _(or `npm install`)_
-2. Find the detection service under: `src/modules/detection-module/service.ts`
+## How It Works
 
-    ```ts
-    import { DetectionResponse, DetectionRequest } from './dtos'
+The system intercepts transactions before execution, collects contextual data, performs multi-layer analysis, calculates a comprehensive risk score, and provides appropriate responses based on the risk level.
 
-    /**
-     * DetectionService
-     *
-     * Implements a `detect` method that receives an enriched view of an
-     * EVM compatible transaction (i.e. `DetectionRequest`)
-     * and returns a `DetectionResponse`
-     *
-     * API Reference:
-     * https://github.com/ironblocks/venn-custom-detection/blob/master/docs/requests-responses.docs.md
-     */
-    export class DetectionService {
-        /**
-         * Update this implementation code to insepct the `DetectionRequest`
-         * based on your custom business logic
-         */
-        public static detect(request: DetectionRequest): DetectionResponse {
-            
-            /**
-             * For this "Hello World" style boilerplate
-             * we're mocking detection results using
-             * some random value
-             */
-            const detectionResult = Math.random() < 0.5;
+### Architecture
 
+1. **Transaction Interception**
+   - Captures pending transactions before execution
+   - Creates a detection request with transaction data and context
 
-            /**
-             * Wrap our response in a `DetectionResponse` object
-             */
-            return new DetectionResponse({
-                request,
-                detectionInfo: {
-                    detected: detectionResult,
-                },
-            });
-        }
-    }
-    ```
+2. **Data Collection & Enrichment**
+   - Gathers historical data, cross-chain activity, social graph information
+   - Enriches transactions with metadata like contract verification status
 
-3. Implement your own logic in the `detect` method
-4. Run `yarn dev` _(or `npm run dev`)_
-5. That's it! Your custom detector service is now ready to inspect transaction
+3. **Multi-Layer Analysis**
+   - Each analyzer examines a different security aspect
+   - Individual risk scores are calculated for each dimension
 
-## 📦 What's inside?
-This boilerplate is built using `Express.js`, and written in `TypeScript` using `NodeJS`.  
-You can use it as-is by adding your own security logic to it, or as a reference point when using a different programming language.
+4. **Risk Calculation**
+   - Combines individual scores with contextual weighting
+   - Implements correlation boosting for multi-vector risks
 
-**Notes on the API**
-1. Your detector will get a `DetectionRequest`, and is expected to respond with a `DetectionResponse`
+5. **Decision Engine**
+   - Evaluates final risk score against thresholds
+   - Determines appropriate response (allow, warn, block)
 
-See our [API Reference](https://github.com/ironblocks/venn-custom-detection/blob/master/docs/requests-responses.docs.md) for more information.
+6. **Learning & Improvement**
+   - Transaction outcomes feed back into the system
+   - User decisions help refine the model
 
-## 🛠️ Local Development
+## Custom Detectors
 
-**Environment Setup**
+### 1. Phishing Custom Detector
+Detects transactions initiated from malicious or fake dApp interfaces that aim to trick users.
 
-Create a `.env` file with:
+**Triggers:**
+- Transaction originates from a known phishing domain
+- Domain has suspicious characteristics (similarity to legitimate services, recent registration)
+- UI manipulation markers detected
 
-```bash
-PORT=3000
-HOST=localhost
-LOG_LEVEL=debug
-```
+**Example Transaction:**
+A transaction from a legitimate wallet to `0x7a250d5630b4cf539739df2c5dacb4c659f2488d` (Uniswap Router) but originating from the domain `uniswap-exchange.org` (not the legitimate Uniswap domain).
 
-**Runing In Dev Mode**
-```bash
-yarn        # or npm install
-yarn dev    # or npm run dev
-```
+### 2. Approvals Custom Detector
+Identifies malicious, risky, or deceptive token approvals that could give attackers access to assets.
 
-## 🚀 Deploy To Production
+**Triggers:**
+- Unlimited token approvals (maximum uint256 value)
+- Approvals to recently deployed or unverified contracts
+- setApprovalForAll for NFT collections
 
-**Manual Build**
+**Example Transaction:**
+An ERC20 approval transaction to an unverified contract with function signature `0x095ea7b3` and unlimited approval amount `0xffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff`.
 
-```bash
-yarn build      # or npm run build
-yarn start      # or npm run start
-```
+### 3. 2FA Custom Detector
+Enables users to use authenticator apps to confirm high-risk transactions.
 
+**Triggers:**
+- Transaction risk level is MEDIUM or HIGH
+- Transaction involves large value transfers
+- Transaction matches user-configured 2FA triggers
 
-**Using Docker**
-```bash
-docker build -f Dockerfile . -t my-custom-detector
-```
+**Example Scenario:**
+A transaction with a final risk score above 40 will require 2FA verification before proceeding.
 
+### 4. MEV Custom Detector
+Prevents value extraction attacks like sandwich trades that exploit users during swaps.
+
+**Triggers:**
+- DEX swap transactions with low slippage tolerance
+- Swaps involving low-liquidity pairs
+- Transactions during high gas price periods
+
+**Example Transaction:**
+A swap on Uniswap (`0x7a250d5630b4cf539739df2c5dacb4c659f2488d`) with function signature `0x38ed1739` (swapExactTokensForTokens) and minimal slippage protection.
+
+### 5. Rugpull (Smart Contract) Custom Detector
+Analyzes smart contracts for hidden risks that could allow developers to drain funds.
+
+**Triggers:**
+- Interactions with unverified contracts
+- Contracts with suspicious code patterns
+- Recently deployed contracts with high-risk functions
+
+**Example Transaction:**
+A transaction to a contract created within the last 7 days that is unverified on block explorers.
+
+### 6. Multisig Protection Custom Detector
+Enhances security for multisig wallets by detecting unusual signing patterns.
+
+**Triggers:**
+- Deviation from established signing sequences
+- Attempts to change owner addresses
+- Unusual timing of signature submissions
+
+**Example Transaction:**
+A transaction from a known multisig wallet attempting to execute an owner replacement function.
+
+## Implementation Details
+
+The Transaction Context Guardian implements all required custom detectors using a modular architecture where each analyzer focuses on a specific security aspect. The risk calculator combines these individual analyses into a comprehensive risk assessment.
+
+The implementation carefully balances security with usability by:
+- Only blocking transactions with HIGH risk scores
+- Requiring 2FA for MEDIUM risk transactions
+- Providing detailed explanations for any flagged transactions
+
+## Testing
+
+The system has been tested against various attack scenarios including:
+- Simulated phishing attacks
+- Malicious approval scenarios
+- MEV attack patterns
+- Contract-based attack vectors
+
+All detectors have been validated with both positive test cases (should trigger) and negative test cases (shouldn't trigger).
+
+## Future Improvements
+
+1. **Machine Learning Integration**
+   - Train models on historical attack data
+   - Implement adaptive thresholds based on user behavior
+
+2. **Enhanced Cross-Chain Monitoring**
+   - Expand bridge contract database
+   - Implement real-time bridge activity tracking
+
+3. **Community Threat Intelligence**
+   - Anonymous sharing of attack vectors
+   - Rapid distribution of new threat signatures
