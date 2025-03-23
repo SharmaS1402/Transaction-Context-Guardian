@@ -12,6 +12,7 @@ The system intercepts transactions before execution, collects contextual data, p
 
 ### Architecture
 
+```mermaid
 flowchart TD
     subgraph "User Interaction"
         A[User Initiates Transaction] --> B{Transaction Interceptor}
@@ -64,7 +65,7 @@ flowchart TD
         X --> Y[Model Refinement]
         Y --> C
     end
-    
+```
 1. **Transaction Interception**
    - Captures pending transactions before execution
    - Creates a detection request with transaction data and context
